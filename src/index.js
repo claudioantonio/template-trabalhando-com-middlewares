@@ -10,19 +10,59 @@ app.use(cors());
 const users = [];
 
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+  const user = users.find(user => user.username == username);
+  if (user) {
+    request.user = user;
+    next();
+  } else {
+    response.status(404);
+  }
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  const user = request.user;
+  if (!user) return;
+
+  if (user.pro) {
+    next();
+  } else {
+    if (user.todos.length >= 10) {
+      response.status(403);
+    } else {
+      next();
+    }
+  }
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+  const { id } = request.params;
+
+  const user = users.find(user => user.username == username);
+
+  if (!user) return response.status(404).json({ error: "user not found" });
+  if (!validate(id)) return response.status(400).json({ error: "todo id provided is not a uuid" });
+
+  const todo = user.todos.find(todo => todo.id == id);
+  if (todo) {
+    request.user = user;
+    request.todo = todo;
+    next();
+  } else {
+    return response.status(404).json({ error: "no todo found for the provided id" });
+  }
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const { id } = request.params;
+  const user = users.find(user => user.id == id);
+  if (user) {
+    request.user = user;
+    next();
+  } else {
+    response.status(404);
+  }
 }
 
 app.post('/users', (request, response) => {
